@@ -1,5 +1,13 @@
-# datos_plan.py - PLAN LSI 2010 con Periodicidad
 
+def obtener_reglas_correlatividad(codigo_materia):
+    """Simula una consulta a la base de reglas."""
+    materia = PLAN_ESTUDIOS.get(codigo_materia)
+    return {
+        "aprobadas_necesarias": materia["req_apr"],
+        "regulares_necesarias": materia["req_reg"]
+    }
+
+# Contiene el conocimiento experto del dominio (Plan LSI 2010)
 PLAN_ESTUDIOS = {
     # --- PRIMER AÑO ---
     "101": {"nombre": "Algoritmos y Estructuras de Datos I", "req_reg": [], "req_apr": [], "area": "Programación", "filtro": False, "cuatri": 1},
