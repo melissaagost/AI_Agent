@@ -19,7 +19,7 @@ PLAN_ESTUDIOS = {
     # --- SEGUNDO AÑO ---
     "201": {"nombre": "Paradigmas y Lenguajes", "req_reg": ["103"], "req_apr": ["101"], "area": "Programación", "filtro": False, "cuatri": 1},
     "202": {"nombre": "Arquitectura y Org. de Computadoras", "req_reg": ["104"], "req_apr": ["101"], "area": "Computación", "filtro": True, "cuatri": 1},
-    "203": {"nombre": "Cálculo Diferencial e Integral", "req_reg": ["106"], "req_apr": ["102"], "area": "Ciencias Básicas", "filtro": False, "cuatri": 1},
+    "203": {"nombre": "Cálculo Diferencial e Integral", "req_reg": ["104"], "req_apr": ["102"], "area": "Ciencias Básicas", "filtro": False, "cuatri": 1},
     "204": {"nombre": "Programación Orientada a Objetos", "req_reg": ["201"], "req_apr": ["103"], "area": "Programación", "filtro": False, "cuatri": 2},
     "205": {"nombre": "Sistemas Operativos", "req_reg": ["202"], "req_apr": ["103"], "area": "Computación", "filtro": True, "cuatri": 2},
     "206": {"nombre": "Administración y Gestión de Org.", "req_reg": ["105"], "req_apr": [], "area": "Sistemas", "filtro": False, "cuatri": 2},

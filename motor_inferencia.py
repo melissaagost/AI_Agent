@@ -12,15 +12,20 @@ class MotorInferenciaExperto:
         # 2. MEMORIA DE TRABAJO: Hechos dinámicos del alumno actual
         self.mt = {
             "aprobadas": set(),
-            "cuatrimestre_peribido": None
+            "regulares": set(),
+            "cuatrimestre_percibido": None
         }
 
-    def cargar_memoria_trabajo(self, aprobadas, cuatrimestre):
+        # Caché para la heurística
+        self._cache_impacto = {}
+
+    def cargar_memoria_trabajo(self, aprobadas, regulares, cuatrimestre):
         """
         Fase de Adquisición: Carga los hechos percibidos en la MT.
         """
         self.mt["aprobadas"] = set(aprobadas)
-        self.mt["cuatrimestre_peribido"] = cuatrimestre
+        self.mt["regulares"] = set(regulares)
+        self.mt["cuatrimestre_percibido"] = cuatrimestre
 
     def _evaluar_reglas(self):
         """
@@ -28,16 +33,19 @@ class MotorInferenciaExperto:
         Implementa razonamiento de Encadenamiento hacia Adelante.
         """
         hechos_aprobados = self.mt["aprobadas"]
-        periodo = self.mt["cuatrimestre_peribido"]
+        # Una materia aprobada cuenta también como regular para los requisitos
+        hechos_reg_extendidos = self.mt["regulares"].union(hechos_aprobados)
+        periodo = self.mt["cuatrimestre_percibido"]
         habilitadas = []
 
         for cod, data in self.bc.items():
-            if cod not in hechos_aprobados:
-                # Modus Ponens: Verificación de condiciones de la regla
+            # No sugerimos materias que ya están aprobadas o regulares
+            if cod not in hechos_aprobados and cod not in self.mt["regulares"]:
+                # Modus Ponens: Verificación de condiciones
                 cumple_apr = all(r in hechos_aprobados for r in data["req_apr"])
-                cumple_reg = all(r in hechos_aprobados for r in data["req_reg"])
+                cumple_reg = all(r in hechos_reg_extendidos for r in data["req_reg"])
                 
-                # Restricción Situada: Contexto del cuatrimestre
+                # Restricción Situada: Contexto temporal
                 es_periodo_valido = (data["cuatri"] == periodo) or (data["cuatri"] == "Anual")
                 
                 if cumple_apr and cumple_reg and es_periodo_valido:
@@ -45,31 +53,63 @@ class MotorInferenciaExperto:
         
         return habilitadas
 
+    def _obtener_nodos_descendientes(self, cod_materia, visitados=None):
+        """
+        Busca todas las materias futuras que dependen (directa o indirectamente) de la materia actual.
+        """
+        if visitados is None:
+            visitados = set()
+            
+        if cod_materia in visitados:
+            return set()
+            
+        visitados.add(cod_materia)
+        descendientes = set()
+        
+        for cod_futura, data_futura in self.bc.items():
+            if cod_materia in data_futura["req_reg"] or cod_materia in data_futura["req_apr"]:
+                descendientes.add(cod_futura)
+                descendientes.update(self._obtener_nodos_descendientes(cod_futura, visitados))
+                
+        return descendientes
+
+    def calcular_impacto_transitivo(self, cod_materia):
+        if cod_materia not in self._cache_impacto:
+            nodos = self._obtener_nodos_descendientes(cod_materia)
+            self._cache_impacto[cod_materia] = len(nodos)
+        return self._cache_impacto[cod_materia]
+
     def aplicar_heuristica(self, habilitadas):
         """
         Resolución de Conflictos: Prioriza las reglas disparadas según utilidad futura.
-        Utiliza el concepto de 'Grado de Salida' (Camino Crítico).
+        Utiliza el 'Cierre Transitivo' para encontrar cuellos de botella reales en la trayectoria.
         """
-        puntuacion = {}
-        for cod_h in habilitadas:
-            # Cuenta cuántas materias futuras dependen de este hecho
-            dependencias_futuras = 0
-            for data in self.bc.values():
-                if cod_h in data["req_reg"] or cod_h in data["req_apr"]:
-                    dependencias_futuras += 1
-            puntuacion[cod_h] = dependencias_futuras
-        
-        # Ordena de mayor a menor impacto
-        return sorted(habilitadas, key=lambda x: puntuacion[x], reverse=True)
+        # Ordenamos de mayor a menor impacto transitivo
+        # Criterio secundario de desempate: Si es materia "filtro"
+        return sorted(
+            habilitadas, 
+            key=lambda x: (
+                self.calcular_impacto_transitivo(x), 
+                1 if self.bc[x].get("filtro") else 0
+            ), 
+            reverse=True
+        )
 
     def ejecutar_ciclo_inferencia(self):
         """
-        Ciclo principal: Percibir -> Razonar (Evaluar + Heurística) -> Concluir.
+        Ciclo principal: Percibir -> Razonar -> Concluir.
+        Retorna la lista de materias ordenadas y su metadata heurística.
         """
-        # Fase 1: Encontrar todas las reglas que pueden dispararse
+        # Fase 1: Match
         reglas_disparadas = self._evaluar_reglas()
         
-        # Fase 2: Ordenar la ejecución mediante la heurística de utilidad
+        # Fase 2: Heurística
         conclusiones_ordenadas = self.aplicar_heuristica(reglas_disparadas)
         
-        return conclusiones_ordenadas
+        # Fase 3: Resultado enriquecido para el Módulo de Explicación
+        resultado = []
+        for cod in conclusiones_ordenadas:
+            impacto = self.calcular_impacto_transitivo(cod)
+            resultado.append((cod, impacto))
+            
+        return resultado
