@@ -65,14 +65,44 @@ def mostrar_grafo(aprobadas, regulares, recomendadas):
     return agraph(nodes=nodes, edges=edges, config=config)
 
 # --- SIDEBAR (Entrada de datos) ---
+# --- SIDEBAR (Con persistencia de datos) ---
 with st.sidebar:
     st.header("Memoria de Trabajo")
     cuatri_actual = st.radio("Cuatrimestre a cursar:", [1, 2], horizontal=True)
-    aprobadas = st.multiselect("Finales Aprobados:", options=list(PLAN_ESTUDIOS.keys()), 
-                               format_func=lambda x: f"[{x}] {PLAN_ESTUDIOS[x]['nombre']}")
-    opciones_reg = [m for m in PLAN_ESTUDIOS.keys() if m not in aprobadas]
-    regulares = st.multiselect("Cursadas Regulares:", options=opciones_reg, 
-                               format_func=lambda x: f"[{x}] {PLAN_ESTUDIOS[x]['nombre']}")
+
+    # 1. Inicializar las claves en session_state si no existen
+    if "aprobadas_state" not in st.session_state:
+        st.session_state.aprobadas_state = []
+    if "regulares_state" not in st.session_state:
+        st.session_state.regulares_state = []
+
+    # 2. Selector de Aprobadas
+    aprobadas = st.multiselect(
+        "Finales Aprobados:",
+        options=list(PLAN_ESTUDIOS.keys()),
+        default=st.session_state.aprobadas_state,
+        format_func=lambda x: f"[{x}] {PLAN_ESTUDIOS[x]['nombre']}",
+        key="aprobadas_selector"
+    )
+    # Actualizamos el estado
+    st.session_state.aprobadas_state = aprobadas
+
+    # 3. Filtrar opciones para regulares (esto es lo que causaba el borrado)
+    opciones_para_regulares = [m for m in PLAN_ESTUDIOS.keys() if m not in aprobadas]
+    
+    # 4. LIMPIEZA INTELIGENTE: 
+    # Filtramos las regulares seleccionadas para que solo queden las que no han sido aprobadas
+    regulares_limpias = [r for r in st.session_state.regulares_state if r in opciones_para_regulares]
+
+    regulares = st.multiselect(
+        "Cursadas Regulares:",
+        options=opciones_para_regulares,
+        default=regulares_limpias, # Aquí forzamos que mantenga las que queden
+        format_func=lambda x: f"[{x}] {PLAN_ESTUDIOS[x]['nombre']}",
+        key="regulares_selector"
+    )
+    # Actualizamos el estado
+    st.session_state.regulares_state = regulares
 
 # --- LÓGICA DEL MOTOR ---
 motor = MotorInferenciaExperto()
