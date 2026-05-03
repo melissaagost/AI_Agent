@@ -12,21 +12,56 @@ def mostrar_grafo(aprobadas, regulares, recomendadas):
     edges = []
     reco_cods = [r[0] for r in recomendadas]
     
+    # 1. Determinamos la visibilidad progresiva (esto lo mantenemos, es muy útil)
+    todas_usuario = set(list(aprobadas) + list(regulares) + reco_cods)
+    if todas_usuario:
+        max_anio_actual = max([int(c[0]) for c in todas_usuario])
+    else:
+        max_anio_actual = 1
+    limite_visibilidad = max_anio_actual + 1
+
     for cod, data in PLAN_ESTUDIOS.items():
-        # Color del nodo
-        color = "#333333" # Bloqueada
-        if cod in aprobadas: color = "#2ecc71" # Verde
-        elif cod in regulares: color = "#3498db" # Azul
-        elif cod in reco_cods: color = "#f1c40f" # Amarillo
+        nivel = int(cod[0])
         
-        nodes.append(Node(id=cod, label=f"{cod}\n{data['nombre']}", size=15, color=color))
-        
-        # Enlaces
-        deps = set(data.get("req_cursar_apr", []) + data.get("req_cursar_reg", []) + data.get("req_rendir_apr", []))
-        for d in deps:
-            edges.append(Edge(source=d, target=cod))
+        if nivel <= limite_visibilidad:
+            # Lógica de colores (igual que antes)
+            color = "#333333" # Bloqueada
+            if cod in aprobadas: color = "#2ecc71" # Verde (Aprobada)
+            elif cod in regulares: color = "#3498db" # Azul (Regular)
+            elif cod in reco_cods: color = "#f1c40f" # Amarillo (Sugerida)
             
-    config = Config(width=800, height=500, directed=True, physics=False, hierarchical=True, direction='LR')
+            # --- AJUSTES DE DISEÑO PARA ESTILO ÁRBOL ---
+            # Usamos formas geométricas simples y fuentes claras
+            nodes.append(Node(
+                id=cod, 
+                label=f"{cod}\n{data['nombre']}", 
+                size=25, # Un tamaño uniforme
+                color=color,
+                level=nivel, # Crucial para la jerarquía
+                font={'color': 'white', 'size': 12, 'face': 'arial'},
+                shape="dot" # O "circle" si prefieres
+            ))
+            
+            deps = set(data.get("req_cursar_apr", []) + data.get("req_cursar_reg", []) + data.get("req_rendir_apr", []))
+            for d in deps:
+                if int(d[0]) <= limite_visibilidad:
+                    # Flechas más limpias y finas para las "ramas"
+                    edges.append(Edge(source=d, target=cod, color="#666666", width=1))
+            
+    # --- CONFIGURACIÓN DE ÁRBOL ESTÁTICO Y LIMPIO ---
+    config = Config(
+        width=1000, 
+        height=600, 
+        directed=True,
+        physics=False,  # ¡IMPORTANTE! Desactivamos física para que parezca un diagrama estático
+        hierarchical=True, # Activa la estructura de árbol
+        direction='LR',  # De Izquierda a Derecha (estilo timeline)
+        sortMethod='directed', # Mantiene el orden jerárquico
+        nodeSpacing=150, # Espacio vertical entre "nodos" del mismo nivel
+        levelSeparation=300, # Espacio horizontal entre niveles (Año 1 -> Año 2)
+        shakeBeforeLayout=True # Ayuda a que se acomode bien al principio
+    )
+    
     return agraph(nodes=nodes, edges=edges, config=config)
 
 # --- SIDEBAR (Entrada de datos) ---
