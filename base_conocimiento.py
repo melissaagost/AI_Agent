@@ -13,7 +13,7 @@ PLAN_ESTUDIOS = {
     "101": {"nombre": "Algoritmos y Estructuras de Datos I", "req_cursar_reg": [], "req_cursar_apr": [], "area": "Programación", "filtro": False, "cuatri": 1},
     "102": {"nombre": "Álgebra", "req_cursar_reg": [], "req_cursar_apr": [], "area": "Ciencias Básicas", "filtro": True, "cuatri": 1},
     "103": {"nombre": "Algoritmos y Estructuras de Datos II", "req_cursar_reg": ["101"], "req_cursar_apr": [], "req_rendir_apr":["101"], "area": "Programación", "filtro": False, "cuatri": 2},
-    "104": {"nombre": "Lógica y Matemática Computacional", "req_cursar_reg": [], "req_cursar_apr": ["102"], "area": "Ciencias Comp.", "filtro": True, "cuatri": 2},
+    "104": {"nombre": "Lógica y Matemática Computacional", "req_cursar_reg": [], "req_cursar_apr": [], "req_rendir_apr":["102"], "area": "Ciencias Comp.", "filtro": True, "cuatri": 2},
     "105": {"nombre": "Sistemas y Organizaciones", "req_cursar_reg": [], "req_cursar_apr": [], "area": "Sistemas", "filtro": False, "cuatri": 2},
 
     # --- SEGUNDO AÑO ---
