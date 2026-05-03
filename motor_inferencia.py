@@ -39,8 +39,6 @@ class MotorInferenciaExperto:
 
         for cod, data in self.bc.items():
             if cod not in hechos_aprobados and cod not in self.mt["regulares"]:
-                # Lógica de Cursado: ¿Puedo sentarme a ver la clase?
-                # Usamos los nuevos campos que definimos arriba
                 cumple_apr = all(r in hechos_aprobados for r in data.get("req_cursar_apr", []))
                 cumple_reg = all(r in hechos_reg_extendidos for r in data.get("req_cursar_reg", []))
                 

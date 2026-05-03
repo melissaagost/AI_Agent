@@ -1,4 +1,3 @@
-# interfaz.py
 import streamlit as st
 from motor_inferencia import MotorInferenciaExperto
 from base_conocimiento import PLAN_ESTUDIOS
@@ -12,7 +11,7 @@ def mostrar_grafo(aprobadas, regulares, recomendadas):
     edges = []
     reco_cods = [r[0] for r in recomendadas]
     
-    # 1. Determinamos la visibilidad progresiva (esto lo mantenemos, es muy útil)
+    # Determinamos la visibilidad progresiva
     todas_usuario = set(list(aprobadas) + list(regulares) + reco_cods)
     if todas_usuario:
         max_anio_actual = max([int(c[0]) for c in todas_usuario])
@@ -24,22 +23,21 @@ def mostrar_grafo(aprobadas, regulares, recomendadas):
         nivel = int(cod[0])
         
         if nivel <= limite_visibilidad:
-            # Lógica de colores (igual que antes)
+            # Lógica de colores
             color = "#333333" # Bloqueada
             if cod in aprobadas: color = "#2ecc71" # Verde (Aprobada)
             elif cod in regulares: color = "#3498db" # Azul (Regular)
             elif cod in reco_cods: color = "#f1c40f" # Amarillo (Sugerida)
             
             # --- AJUSTES DE DISEÑO PARA ESTILO ÁRBOL ---
-            # Usamos formas geométricas simples y fuentes claras
             nodes.append(Node(
                 id=cod, 
                 label=f"{cod}\n{data['nombre']}", 
-                size=25, # Un tamaño uniforme
+                size=25, 
                 color=color,
-                level=nivel, # Crucial para la jerarquía
+                level=nivel,
                 font={'color': 'white', 'size': 12, 'face': 'arial'},
-                shape="dot" # O "circle" si prefieres
+                shape="dot"
             ))
             
             deps = set(data.get("req_cursar_apr", []) + data.get("req_cursar_reg", []) + data.get("req_rendir_apr", []))
@@ -48,12 +46,12 @@ def mostrar_grafo(aprobadas, regulares, recomendadas):
                     # Flechas más limpias y finas para las "ramas"
                     edges.append(Edge(source=d, target=cod, color="#666666", width=1))
             
-    # --- CONFIGURACIÓN DE ÁRBOL ESTÁTICO Y LIMPIO ---
+    # --- CONFIGURACIÓN DE ÁRBOL ESTÁTICO ---
     config = Config(
         width=1000, 
         height=600, 
         directed=True,
-        physics=False,  # ¡IMPORTANTE! Desactivamos física para que parezca un diagrama estático
+        physics=False, 
         hierarchical=True, # Activa la estructura de árbol
         direction='LR',  # De Izquierda a Derecha (estilo timeline)
         sortMethod='directed', # Mantiene el orden jerárquico
@@ -65,7 +63,6 @@ def mostrar_grafo(aprobadas, regulares, recomendadas):
     return agraph(nodes=nodes, edges=edges, config=config)
 
 # --- SIDEBAR (Entrada de datos) ---
-# --- SIDEBAR (Con persistencia de datos) ---
 with st.sidebar:
     st.header("Memoria de Trabajo")
     cuatri_actual = st.radio("Cuatrimestre a cursar:", [1, 2], horizontal=True)
@@ -87,7 +84,7 @@ with st.sidebar:
     # Actualizamos el estado
     st.session_state.aprobadas_state = aprobadas
 
-    # 3. Filtrar opciones para regulares (esto es lo que causaba el borrado)
+    # 3. Filtrar opciones para regulares
     opciones_para_regulares = [m for m in PLAN_ESTUDIOS.keys() if m not in aprobadas]
     
     # 4. LIMPIEZA INTELIGENTE: 
@@ -97,7 +94,7 @@ with st.sidebar:
     regulares = st.multiselect(
         "Cursadas Regulares:",
         options=opciones_para_regulares,
-        default=regulares_limpias, # Aquí forzamos que mantenga las que queden
+        default=regulares_limpias,
         format_func=lambda x: f"[{x}] {PLAN_ESTUDIOS[x]['nombre']}",
         key="regulares_selector"
     )
